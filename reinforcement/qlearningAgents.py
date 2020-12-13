@@ -41,8 +41,8 @@ class QLearningAgent(ReinforcementAgent):
     def __init__(self, **args):
         "You can initialize Q-values here..."
         ReinforcementAgent.__init__(self, **args)
-
-        "*** YOUR CODE HERE ***"
+        print("args", str(dir(self)))
+        self.Q = {}
 
     def getQValue(self, state, action):
         """
@@ -50,7 +50,14 @@ class QLearningAgent(ReinforcementAgent):
           Should return 0.0 if we have never seen a state
           or the Q node value otherwise
         """
-        "*** YOUR CODE HERE ***"
+        try: self.Q[state]
+        except KeyError: self.Q[state] = {}
+        try: self.Q[state][action]
+        except KeyError: self.Q[state][action] = 0.0
+        
+        print(state, action, self.Q[state][action])
+        return self.Q[state][action]
+
         util.raiseNotDefined()
 
 
@@ -61,7 +68,16 @@ class QLearningAgent(ReinforcementAgent):
           there are no legal actions, which is the case at the
           terminal state, you should return a value of 0.0.
         """
-        "*** YOUR CODE HERE ***"
+        try: self.Q[state]
+        except KeyError: self.Q[state] = {}
+        legalActions = self.getLegalActions(state)
+        for action in legalActions:
+            try: self.Q[state][action]
+            except KeyError: self.Q[state][action] = 0.0
+        
+        if len(state) == 1:
+            return 0.0
+        return(max(directions for directions in self.Q[state].values()))
         util.raiseNotDefined()
 
     def computeActionFromQValues(self, state):
@@ -70,7 +86,17 @@ class QLearningAgent(ReinforcementAgent):
           are no legal actions, which is the case at the terminal state,
           you should return None.
         """
-        "*** YOUR CODE HERE ***"
+        legalActions = self.getLegalActions(state)
+        action = None
+        print("Legal actions", legalActions, "length", len(legalActions))
+        if len(legalActions) > 1:
+            for direction in self.Q[state]:
+                print("Currect direction", direction, "value", self.Q[state][direction])
+                print("Value", self.computeValueFromQValues(state))
+                if self.Q[state][direction] == self.computeValueFromQValues(state):
+                    action = direction
+
+        return action        
         util.raiseNotDefined()
 
     def getAction(self, state):
@@ -101,7 +127,18 @@ class QLearningAgent(ReinforcementAgent):
           NOTE: You should never call this function,
           it will be called on your behalf
         """
-        "*** YOUR CODE HERE ***"
+        if nextState == "TERMINAL_STATE":
+            if reward == 1 and self.Q[state][action] != 1: self.Q[state][action] = 1
+            if reward == -1 and self.Q[state][action] != -1: self.Q[state][action] = -1
+        else:            
+            sample = reward + self.discount * self.computeValueFromQValues(nextState)
+            newQ = (1 - self.alpha) * self.Q[state][action] + self.alpha * sample
+            self.Q[state][action] = newQ
+        
+        print("Directions in", state, self.Q[state])
+        print("State", state, "Maxvalue", self.computeValueFromQValues(state))
+        print("Action", self.computeActionFromQValues(state))
+        return self.Q[state][action]
         util.raiseNotDefined()
 
     def getPolicy(self, state):
